@@ -1,4 +1,4 @@
-obj-m += t_mod.o
+obj-m += nf_mod.o 
 
 all:
 	make -C /lib/modules/$(shell uname -r)/build M=$(PWD) modules
