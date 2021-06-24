@@ -31,10 +31,10 @@ int main(int argc, char **argv)
 
 	sendto(sock, argv[2], strlen(argv[2]), 0, (struct sockaddr *)&serv_addr, sizeof(serv_addr));
 	
-	memset(&buff, 0, sizeof(buff));
-	cli_size = sizeof(cli_addr);
-	n = recvfrom(sock, buff, 1024, 0, (struct sockaddr*)&cli_addr, &cli_size);
-	printf("[client] : %s\n", buff);
+	//memset(&buff, 0, sizeof(buff));
+	//cli_size = sizeof(cli_addr);
+	//n = recvfrom(sock, buff, 1024, 0, (struct sockaddr*)&cli_addr, &cli_size);
+	//printf("[client] : %s\n", buff);
 
 	close(sock);
 
