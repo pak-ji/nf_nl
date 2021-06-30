@@ -7,6 +7,7 @@
 
 #include <linux/ip.h>	// ip_hdr()
 #include <linux/udp.h>	// udp_hdr()
+#include <linux/tcp.h>	// tcp_hdr()
 
 #include <linux/string.h> // memset()
 
@@ -15,33 +16,24 @@ struct nf_hook_ops hook_ops;
 unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_hook_state *state)
 {
 	struct iphdr *ip = ip_hdr(skb);
-	//unsigned char *trans_hdr = skb_transport_header(skb); //4layer header
-
-	printk("caller : %s", current->comm);
-	printk("protocol : %d", ip->protocol);
 
 	if(ip->protocol == 17) // if udp
 	{
-		struct udphdr *udp = udp_hdr(skb);
-		char *udp_data = (char*)udp+8;		// p -> [udp_data = app_data]
+		struct udphdr *udp = udp_hdr(skb);			
+		
+		printk("Hooked UDP Packet");
+		printk("src -> dst : %pI4:%d -> %pI4:%d",
+			&ip->saddr, be16_to_cpu(udp->source),
+			&ip->daddr, be16_to_cpu(udp->dest));
+	}
+	else if(ip->protocol == 6) // if tcp
+	{
+		struct tcphdr *tcp = tcp_hdr(skb);
 
-		char udp_data_buff[1024] = { '\0', };
-
-		int udp_data_len = be16_to_cpu(udp->len)-8;
-		int i;
-
-		printk("src -> dst : %pI4.%d -> %pI4.%d", 
-				&ip->saddr, be16_to_cpu(udp->source), 
-				&ip->daddr, be16_to_cpu(udp->dest));
-
-		for(i=0; i<udp_data_len; i++)
-		{
-			udp_data_buff[i] = *(udp_data++);
-		}
-		printk("data : %s", udp_data_buff);
-		memset(&udp_data_buff, '\0', sizeof(udp_data_buff));
-
-		//return NF_DROP; // packet drop
+		printk("Hooked TCP Packet");
+		printk("src -> dst : %pI4:%d -> %pI4:%d",
+			&ip->saddr, be16_to_cpu(tcp->source),
+			&ip->daddr, be16_to_cpu(tcp->dest));
 	}
 
 	printk("\n");
@@ -51,7 +43,7 @@ unsigned int hook_func(void *priv, struct sk_buff *skb, const struct nf_hook_sta
 static int __init init_(void)
 {
 	hook_ops.hook = hook_func;
-	hook_ops.hooknum = NF_INET_LOCAL_IN;
+	hook_ops.hooknum = NF_INET_POST_ROUTING;
 	hook_ops.pf = NFPROTO_IPV4;
 
 	if( !nf_register_net_hook(&init_net, &hook_ops))
